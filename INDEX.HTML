@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Psixologlar Uchun Sayt</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3062/3062634.png" type="image/png">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f7fa;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    header h1 {
+      font-size: 2.5em;
+    }
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    input, button {
+      padding: 12px;
+      margin: 10px 0;
+      width: 100%;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    input:focus, button:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+    .video-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .video-item {
+      position: relative;
+      width: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .video-item:hover {
+      transform: scale(1.02);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+    iframe {
+      width: 100%;
+      height: 315px;
+      border: none;
+      border-radius: 10px;
+    }
+    .success-message {
+      color: green;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .delete-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Psixologlar Uchun Sayt</h1>
+    <p>Promo-kod orqali kirish</p>
+  </header>
+
+  <div class="container" id="loginSection">
+    <h2>Promo-kod kiriting</h2>
+    <input type="text" id="promoInput" placeholder="Promo-kod...">
+    <button onclick="checkPromo()">Kirish</button>
+  </div>
+
+  <div class="container hidden" id="userSection">
+    <h2>Foydali videolar</h2>
+    <div id="videoList" class="video-wrapper">
+      <!-- Videolar shu yerda ko‘rsatiladi -->
+    </div>
+  </div>
+
+  <div class="container hidden" id="adminSection">
+    <h2>Admin Panel</h2>
+    <form id="videoForm">
+      <input type="text" id="videoUrl" placeholder="YouTube yoki Instagram video havolasini kiriting" required>
+      <button type="submit">Video qo‘shish</button>
+    </form>
+    <div class="success-message" id="successMessage" style="display: none;">Video qo‘shildi!</div>
+    <div id="videoListAdmin" class="video-wrapper"></div>
+  </div>
+
+  <script>
+    const videoForm = document.getElementById('videoForm');
+    const videoUrlInput = document.getElementById('videoUrl');
+    const videoList = document.getElementById('videoList');
+    const videoListAdmin = document.getElementById('videoListAdmin');
+    const successMessage = document.getElementById('successMessage');
+
+    const USER_PROMO = "USER123";
+    const ADMIN_PROMO = "ADMIN123";
+
+    function checkPromo() {
+      const promoCode = document.getElementById("promoInput").value.trim();
+      if (promoCode === USER_PROMO) {
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("userSection").classList.remove("hidden");
+        showVideos(videoList);
+      } else if (promoCode === ADMIN_PROMO) {
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("adminSection").classList.remove("hidden");
+        showVideos(videoListAdmin, true);
+      } else {
+        alert("Noto‘g‘ri promo-kod!");
+      }
+    }
+
+    function showVideos(container, isAdmin = false) {
+      const videos = JSON.parse(localStorage.getItem('videos') || "[]");
+      container.innerHTML = "";
+      videos.forEach((url, index) => {
+        const videoWrapper = document.createElement('div');
+        videoWrapper.classList.add('video-item');
+
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.allowFullscreen = true;
+
+        videoWrapper.appendChild(iframe);
+
+        if (isAdmin) {
+          const delBtn = document.createElement('button');
+          delBtn.textContent = 'O‘chirish';
+          delBtn.classList.add('delete-btn');
+          delBtn.onclick = () => deleteVideo(index);
+          videoWrapper.appendChild(delBtn);
+        }
+
+        container.appendChild(videoWrapper);
+      });
+    }
+
+    function deleteVideo(index) {
+      let videos = JSON.parse(localStorage.getItem('videos') || "[]");
+      videos.splice(index, 1);
+      localStorage.setItem("videos", JSON.stringify(videos));
+      showVideos(videoListAdmin, true);
+    }
+
+    function convertToEmbedUrl(url) {
+      if (url.includes("youtu.be")) {
+        const videoId = url.split('/').pop();
+        return `https://www.youtube.com/embed/${videoId}`;
+      } else if (url.includes("youtube.com/watch?v=")) {
+        const videoId = url.split('v=')[1].split('&')[0];
+        return `https://www.youtube.com/embed/${videoId}`;
+      } else if (url.includes("instagram.com")) {
+        return url.replace("/reel/", "/p/").split('?')[0] + "/embed";
+      }
+      return null;
+    }
+
+    if (videoForm) {
+      videoForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const url = videoUrlInput.value;
+        const embedUrl = convertToEmbedUrl(url);
+        if (embedUrl) {
+          let videos = JSON.parse(localStorage.getItem('videos') || "[]");
+          videos.push(embedUrl);
+          localStorage.setItem("videos", JSON.stringify(videos));
+          videoUrlInput.value = "";
+          showVideos(videoListAdmin, true);
+          successMessage.style.display = 'block';
+          setTimeout(() => {
+            successMessage.style.display = 'none';
+          }, 3000);
+        } else {
+          alert('Faqat YouTube yoki Instagram havolasi qabul qilinadi.');
+        }
+      });
+    }
+  </script>
+</body>
+</html>
